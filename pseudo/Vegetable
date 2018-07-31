@@ -1,0 +1,117 @@
+/*********************************************************************
+ * CLASS Vegetable
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 29/05/18
+ * PURPOSE Creates Vegetabe object, with validation.
+ *********************************************************************/
+
+CLASSFIELDS:
+  weight (Real)
+  bestBefore (Date object)
+
+CONSTRUCTORS:
+
+  default:
+  IMPORTS: none
+    CONSTRUCT Food USING default
+    setWeight <- 0.2
+    setBestBefore <- 31/12/9999
+
+  alternate:
+  IMPORTS: name (String), weight (Real), storageTemp (Real),
+      bestBefore (Date object), packaging (String)
+    CONSTRUCT Food USING alternate <- name, storageTemp, packaging
+    setWeight <- weight
+    setBestBefore <- bestBefore
+
+  copy:
+  IMPORTS: vegetableIn (Vegetable object)
+    CONSTRUCT Food USING copy <- vegetableIn
+    setWeight <- vegetableIn getWeight <- none
+    setBestBefore <- vegetableIn getBestBefore <-
+END CONSTRUCTORS
+
+SETTERS:
+
+  setWeight
+  IMPORTS: weight (Real)
+    IF weight >= 0.2 AND weight <= 5.0
+      CLASSFIELD weight := weight
+    ELSE
+      FAIL IllegalArgumentException "Error: Weight out of bounds."
+    END ELSE
+
+  setBestBefore
+  IMPORTS: bestBefore (Date object)
+    IF NOT isExpired <- bestBefore
+      CLASSFIELD bestBefore := bestBefore
+    ELSE
+      FAIL IllegalArgumentException "Error: Best-before date in past."
+    END ELSE
+END SETTERS
+
+GETTERS:
+
+  getWeight
+  EXPORTS: weight (Real)
+
+  getBestBefore
+  EXPORTS: bestBefore (Date object)
+END GETTERS
+
+SUBMODULE: clone
+IMPORTS: none
+EXPORTS: clone (Vegetable object)
+ALGORITHM:
+  clone := CONSTRUCT Vegetable USING alternate <- (getName <- none,
+    getWeight <- none, getStorageTemp <- none, getBestBefore <- none,
+    getPackaging <- none)
+END SUBMODULE
+
+SUBMODULE: toString
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string = (getVolume <- none + "L of " + getName <- none +
+    ". Packaged in " + getPackaging <- none + ", with best-before date of " +
+    getBestBefore <- none + " and a storage temperature of " +
+    getStorageTemp <- none + "°C.")
+END SUBMODULE
+
+SUBMODULE: equals
+IMPORTS: objIn (Object)
+EXPORTS: equals (Boolean)
+ALGORITHM:
+  equals := FALSE
+
+  IF SUPER equals <- objIn AND objIn IS A Vegetable
+    vegeIn := objIn AS A Vegetable
+
+    IF vegeIn getWeight <- none EQUALS getWeight AND
+        vegeIn getBestBefore <- none EQUALS getBestBefore <- none
+      equals := TRUE
+    END IF
+  END IF
+END SUBMODULE
+
+SUBMODULE: calcExpiry
+IMPORTS: none
+EXPORTS: expired (Boolean)
+ALGORITHM:
+  today := DATE TODAY
+
+  IF bestBefore <- none IS AFTER today
+    expired := FALSE
+  ELSE
+    expired := TRUE
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: toCSV
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string := ("Vegetable, " + getName <- none + ", " + getWeight <- none +
+    getBestBefore <- none + ", " + getPackaging <- none)
+END SUBMODULE

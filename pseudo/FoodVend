@@ -1,0 +1,18 @@
+/*********************************************************************
+ * CLASS FoodVend
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 24/05/18
+ * PURPOSE Main class for the FoodVend program.
+ *********************************************************************/
+
+Main
+  main := CONSTRUCT MainMenu USING default
+
+  TRY
+    main menuStart <- none
+  CATCH Exception //should never be reached
+    TerminalUtility clearTerminal <- none
+    OUTPUT "Exiting with unexpected error: " + Exception MESSAGE
+  END TRYCATCH
+END MAIN

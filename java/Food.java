@@ -1,0 +1,209 @@
+/*********************************************************************
+ * CLASS Food
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 25/05/18
+ * PURPOSE Food object superclass. Validates that strings are not-null
+ *         and defines some abstract methods.
+ *********************************************************************/
+
+import java.util.Date;
+
+public abstract class Food implements IFood
+{
+  private String name;
+  private double storageTemp;
+  private String packaging;
+
+  public Food()
+  { //default constructor
+    setName("");
+    setStorageTemp(21.0);
+    setPackaging("");
+  }
+
+  public Food(String name, double storageTemp, String packaging)
+  { //alt constructor
+    setName(name);
+    setStorageTemp(storageTemp);
+    setPackaging(packaging);
+  }
+
+  public Food(Food foodIn)
+  { //copy constructor
+    setName(foodIn.getName());
+    setStorageTemp(foodIn.getStorageTemp());
+    setPackaging(foodIn.getPackaging());
+  }
+
+  //SETTERS
+  public void setStorageTemp(double storageTemp)
+  {
+    if (storageTemp <= 25.0 && storageTemp >= -27.0)
+    {
+      this.storageTemp = storageTemp;
+    }
+    else
+    {
+      throw new IllegalArgumentException("Error: Temperature out of range.");
+    }
+  }
+
+  public void setName(String name)
+  {
+    if (name != null)
+    {
+      this.name = new String(name);
+    }
+    else
+    {
+      throw new IllegalArgumentException("Error: Name is null.");
+    }
+  }
+
+  public void setPackaging(String packaging)
+  {
+    if (packaging != null)
+    {
+      this.packaging = new String(packaging);
+    }
+    else
+    {
+      throw new IllegalArgumentException("Error: Packaging is null.");
+    }
+  }
+
+  //GETTERS
+  public double getStorageTemp()
+  {
+    return storageTemp;
+  }
+
+  public String getName()
+  {
+    return new String(name);
+  }
+
+  public String getPackaging()
+  {
+    return new String(packaging);
+  }
+
+  /*####################################################################
+   # METHOD equals
+   # IMPORTS objIn (Object)
+   # EXPORTS equals (Boolean)
+   # PURPOSE Checks if objIn is equal to Food object.
+   # ASSERTION Returns true if the given object is a Food object and if
+   #           all aspects of both match.
+   *###################################################################*/
+
+  public boolean equals(Object objIn)
+  {
+    boolean equals = false; //guilty until proven innocent
+
+    if (objIn instanceof Food)
+    {
+      Food foodIn = (Food)objIn;
+
+      if (foodIn.getName().equals(this.getName()) &&
+        foodIn.getStorageTemp() == this.getStorageTemp() &&
+        foodIn.getPackaging().equals(this.getPackaging()))
+      {
+        equals = true;
+      }
+    }
+
+    return equals;
+  }
+
+  /*####################################################################
+   # METHOD isExpired
+   # IMPORTS expDate (Date)
+   # EXPORTS expired (Boolean)
+   # PURPOSE Checks if expDate has passed, for date input validation.
+   # ASSERTION Returns true if the given date is in the past.
+   *###################################################################*/
+
+  public boolean isExpired(Date expDate)
+  {
+    Date today = new Date();
+    boolean expired;
+
+    if (expDate.after(today))
+    {
+      expired = false;
+    }
+    else
+    {
+      expired = true;
+    }
+
+    return expired;
+  }
+
+  /*####################################################################
+   # METHOD calcSpace
+   # IMPORTS food (Food)
+   # EXPORTS space (Integer)
+   # PURPOSE Calculates the space taken up by a Food object based on its
+   #         attributes. Each subclass of Food has a different calculation:
+   #           Meat – weight * 0.86 rounded up
+   #           Grain – volume * 1.0 rounded up
+   #           Fruit – number of pieces * 1.95 rounded up
+   #           Vegetables – weight * 1.025 rounded up
+   # ASSERTION Returns the calculated space as an integer value.
+   *###################################################################*/
+
+  public int calcSpace(Food food)
+  {
+    int space;
+    if (food instanceof Fruit)
+    {
+      space = (int)Math.ceil(((Fruit)food).getNumPiece() * 1.95);
+    }
+    else
+    {
+      if (food instanceof Meat)
+      {
+      space = (int)Math.ceil(((Meat)food).getWeight() * 0.86);
+      }
+      else
+      {
+        if (food instanceof Grain)
+        {
+          space = (int)Math.ceil(((Grain)food).getVolume());
+        }
+        else
+        {
+          if (food instanceof Vegetable)
+          {
+            space = (int)Math.ceil(((Vegetable)food).getWeight() * 1.025);
+          }
+          else
+          {
+            throw new IllegalStateException("Error: Unknown Food.");
+          }
+        }
+      }
+    }
+    return space;
+  }
+
+  public abstract Food clone();
+    //returns a deep copy of the food object
+
+  public abstract String toString();
+    //reports attributes of Food class object
+    //as a human-readible string.
+
+  public abstract boolean calcExpiry();
+    //checks expiry using today's date as generated by itself and returns
+    //true if the food item has reached its expiry date.
+
+  public abstract String toCSV();
+    //reports attributes of Food class objects
+    //as CSV-compatible format string.
+
+
+}

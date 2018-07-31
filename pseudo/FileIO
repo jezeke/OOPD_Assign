@@ -1,0 +1,248 @@
+/*********************************************************************
+ * CLASS FileIO
+ * AUTHOR Jhi Morris
+ * DATE CREATED 10/05/18
+ * DATE LAST EDITED 29/05/18
+ * PURPOSE Creates and handles storage facility, manages reading and
+ *         writing from/to files.
+ *********************************************************************/
+
+CLASSFIELDS:
+  storFac (StorageFacility object)
+
+PASSERS:
+  passFreezer
+  EXPORTS: storFac getFreezer
+
+  passFridge
+  EXPORTS: storFac getFridge
+
+  passPantry
+  EXPORTS: storFac getPantry
+
+  passRemove
+  IMPORTS: index (Integer), location (Integer)
+  ALGORITHM:
+    storFac removeFood <- index, location
+
+  passAdd
+  IMPORTS: food (Food object)
+  ALGORITHM:
+    storFac addFood <- food
+
+SUBMODULE: isLoaded
+IMPORTS: none
+EXPORT: loaded (Boolean)
+ALGORITHM:
+  loaded := false
+
+  IF storFac IS NOT NULL
+    loaded := true
+  END IF
+END SUBMODULE
+
+SUBMODULE: parseFile
+IMPORTS: filename (String)
+EXPORTS skippedLines (Integer)
+ALGORITHM:
+  skippedLines := 0
+
+  csv := loadCSV <- filename
+  sizes := readHeader <- csv
+  storFac := CONSTRUCT StorageFacility USING sizes
+
+  FOR i := 3 TO LENGTH OF csv, INC i
+    TRY
+      addFood <- csv[i]
+    CATCH Exception
+      INC skippedLines
+    END TRYCATCH
+  END FOR
+END SUBMODULE
+
+SUBMODULE: loadCSV
+IMPORTS: filename (String)
+EXPORTS: array (Array of array of strings)
+ALGORITHM:
+  TRY
+    fileStrm := OPENFILE filename
+    lineCount := 0
+    INPUT line FROM fileStrm
+
+    WHILE line NOT NULL
+      INC lineCount
+      INPUT line FROM fileStrm
+    ENDWHILE
+    CLOSEFILE fileStrm
+  CATCH IOException
+    IF filestrm NOT NULL
+      TRY
+        CLOSEFILE fileStrm
+      CATCH IOException
+      END TRYCATCH
+    END IF
+    FAIL IOException "Error: File not found."
+  END TRYCATCH
+
+  TRY
+    fileStrm := OPENFILE filename
+    lineNum := 0
+    INPUT line FROM fileStrm
+    FOR i := 0 TO lineCount INC i
+      array[lineNum] := processLine <- line
+      INC lineNum
+      INPUT line FROM fileStrm
+    END FOR
+    CLOSEFILE fileStrm
+  CATCH ArrayIndexOutOfBounds
+    IF fileStrm NOT NULL
+      TRY
+        CLOSEFILE fileStrm
+      CATCH IOException
+      END TRYCATCH
+    END IF
+    FAIL IOException "Error: Non-CSV file found."
+  END TRYCATCH
+END SUBMODULE
+
+SUBMODULE: processLine
+IMPORTS: csvRow (String)
+EXPORTS: array (Array of strings)
+ALGORITHM:
+  array := SPLIT csvRow DELIMITED BY ','
+END SUBMODULE
+
+SUBMODULE: readHeader
+IMPORTS: array (Array of strings)
+EXPORTS: sizes (Array of integers)
+ALGORITHM:
+  freezer := -1 //init
+  fridge := -1
+  pantry := -1
+
+  FOR i := 0 TO 3 INC i
+    TRY
+      IF array[i][1] AS INTEGER < 0
+        FAIL IllegalArgumentException "Error: Negative store size."
+      END IF
+
+      IF array[i][0] EQUALS "freezer"
+        freezer := array[i][1] AS INTEGER
+      ELSE
+        IF array[i][0] EQUALS "fridge"
+          fridge := array[i][1] AS INTEGER
+        ELSE
+          IF array[i][0] EQUALS "pantry"
+            pantry := array[i][1] AS INTEGER
+          ELSE
+            FAIL IllegalArgumentException "Error: Cannot parse data."
+          END ELSE
+        END ELSE
+      END ELSE
+    CATCH NumberFormatException
+      FAIL IllegalArgumentException "Error: Cannot parse data."
+    CATCH ArrayIndexOutOfBoundsException
+      FAIL IllegalArgumentException "Error: Invalid header data."
+    END TRYCATCH
+  END FOR
+
+  IF (fridge EQUALS -1 OR freezer EQUALS -1 OR pantry EQUALS -1)
+    FAIL IllegalArgumentException "Error: Invalid header data"
+  ENDIF
+
+  sizes := {freezer, fridge, pantry}
+END SUBMODULE
+
+SUBMODULE: addFood
+IMPORTS: line (Array of strings)
+EXPORTS: none
+ALGORITHM:
+  IF line[0] EQUALS "meat"
+    meat := CONSTRUCT Meat USING default
+
+    meat setName <- line[1]
+    meat setCut <- line[2]
+    meat setWeight <- line[3] TO Real
+    meat setStorageTemp <- line[4] TO Real
+    meat setUseby <- line[5] TO Date Object
+    meat setPackaging <- line[6]
+
+    storFac addFood <- meat
+  ELSE
+    IF line[0] EQUALS "grain"
+      grain := CONSTRUCT Grain USING default
+
+      grain setName <- line[1]
+      grain setType <- line[2]
+      grain setVolume <- line[3] TO Real
+      grain setStorageTemp <- line[4] TO Real
+      grain setBestBefore <- line[5] TO Date Object
+      grain setPackaging <- line[6]
+
+      storFac addFood <- grain
+    ELSE
+      IF line[0] EQUALS "fruit"
+        fruit := CONSTRUCT Fruit USING default
+
+        fruit setName <- line[1]
+        fruit setType <- line[2]
+        fruit setNumPiece <- line[3] TO Integer
+        fruit setStorageTemp <- line[4] TO Real
+        fruit setUseby <- line[5] TO Date Object
+        fruit setPackaging <- line[6]
+
+        storFac addFood <- fruit
+      ELSE
+        IF line[0] EQUALS "vegetable"
+          vegetable := CONSTRUCT Vegetable USING default
+
+          vegetable setName <- line[1]
+          vegetable setWeight <- line[2] TO Real
+          vegetable setStorageTemp <- line[3] TO Real
+          vegetable setBestBefore <- line[4] TO Date Object
+          vegetable setPackaging <- line[5]
+
+          storFac addFood <- vegetable
+        ELSE
+          FAIL IllegalArgumentException "Error: Invalid sort."
+        END ELSE
+      END ELSE
+    END ELSE
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: writeStorageCSV
+IMPORTS: filename (String)
+EXPORTS: none
+ALGORITHM:
+  storage := storFac getStorage <- none
+  freezerLength := LENGTH OF storage[0]
+  fridgeLength := LENGTH OF storage[1]
+  pantryLength := LENGTH OF storage[2]
+
+  TRY
+    fileStrm := OPENFILE filename
+
+    OUTPUT "Freezer, " AND freezerLength TO fileStrm
+    OUTPUT "Fridge, " AND fridgeLength TO fileStrm
+    OUTPUT "Pantry, " AND pantryLength to fileStrm
+
+    FOR i := 0 TO LENGTH OF storage INC i
+      FOR j := 0 TO LENGTH OF storage[i] INC j
+        IF storage[i][j] NOT NULL
+          OUTPUT storage[i][j] toCSV TO fileStrm
+        END IF
+      END FOR
+    END FOR
+
+    CLOSEFILE fileStrm
+  CATCH IOException
+    IF fileStrm NOT NULL
+      TRY
+        CLOSEFILE fileStrm
+      CATCH IOException
+      END TRYCATCH
+    END IF
+    FAIL IOException "Error: Unable to write to file."
+  END TRYCATCH
+END SUBMODULE

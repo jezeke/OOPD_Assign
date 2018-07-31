@@ -1,0 +1,134 @@
+/*********************************************************************
+ * CLASS Meat
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 29/05/18
+ * PURPOSE Creates Meat object, with validation.
+ *********************************************************************/
+EXTENDS Food
+
+CLASSFIELDS:
+  cut (String)
+  weight (Real)
+  useby (Date object)
+
+CONSTRUCTORS:
+
+  default:
+  IMPORTS: none
+    CONSTRUCT Food USING default
+    setCut <- ""
+    setWeight <- 0.2
+    setUseby <- 31/12/9999
+
+  alternate:
+  IMPORTS: name (String), cut (String), weight (Real), storageTemp (Real),
+           useby (Date object), packaging (String)
+    CONSTRUCT Food USING alternate <- name, storageTemp, packaging
+    setCut <- cut
+    setWeight <- weight
+    setUseby <- useby
+
+  copy:
+  IMPORTS: meatIn (Meat object)
+    CONSTRUCT Food using altermate <- meatIn
+    setCut <- meatIn getCut <- none
+    setWeight <- meatIn getWeight <- none
+    setUseby <- meatIn getUseby <- none
+END CONSTRUCTORS
+
+SETTERS:
+
+  setWeight
+  IMPORTS: weight (Real)
+    IF weight >= 0.2 AND weight <= 5.0
+      CLASSFIELD weight := weight
+    ELSE
+      FAIL IllegalArgumentException "Error: Weight out of bounds."
+    END ELSE
+
+  setUseby
+  IMPORTS: useby (Date object)
+    IF NOT isExpired <- useby
+      CLASSFIELD useby := useby
+    ELSE
+      FAIL IllegalArgumentException "Error: Useby date in the past."
+    END ELSE
+
+  setCut
+  IMPORTS: cut (String)
+    IF cut NOT NULL
+      CLASSFIELD cut := cut
+    ELSE
+      FAIL IllegalArgumentException "Error: Cut is null."
+    END ELSE
+END SETTERS
+
+GETTERS:
+
+  getCut
+  EXPORTS: cut (String)
+
+  getWeight
+  EXPORTS: weight (Real)
+
+  getUseby
+  EXPORTS: useby (Date object)
+END GETTERS
+
+SUBMODULE clone
+IMPORTS: none
+EXPORTS: clone (Meat object)
+ALGORITHM:
+  clone := CONSTRUCT Meat USING alternate <- (getName <- none, getCut <- none,
+    getWeight <- none, getStorageTemp <- none, getUseby <- none,
+    getPackaging <- none)
+END SUBMODULE
+
+SUBMODULE toString
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string = (getWeight <- none + "g of " + getName <- none + " " +
+    getCut <- none + ". Packaged in " + getPackaging <- none +
+    ", with use-by date of " + getUseby <- none +
+    " and a storage temperature of " + getStorageTemp <- none + "°C.")
+END SUBMODULE
+
+SUBMODULE equals
+IMPORTS: objIn (Object)
+EXPORTS: equals (Boolean)
+ALGORITHM:
+  equals := FALSE
+
+  IF SUPER equals <- objIn AND objIN IS A Meat
+    meatIn := objIn TO Meat
+
+  IF (meatIn.getCut <- none EQUALS (this.getCut <- none) AND
+      meatIn.getUseby <- none EQUALS (this.getUseby <- none) AND
+      meatIn.getWeight <- none EQUALS this.getWeight <- none)
+    equals := TRUE
+  END IF
+END SUBMODULE
+
+SUBMODULE calcExpiry
+IMPORTS: none
+EXPORTS: expired (Boolean)
+ALGORITHM:
+  today := DATE TODAY
+
+  IF useby IS AFTER today
+    expired := FALSE
+  ELSE
+    expired := TRUE
+  END ELSE
+END SUBMODULE
+
+SUBMODULE toCSV
+IMPORTS: none
+EXPORTS: sting (String)
+ALGORITHM:
+  string := ("Meat, " + getName <- none + ", " + getCut <- none + ", " +
+    getWeight <- none + ", " + getStorageTemp <- none + ", " +
+    getUseby <- none + ", " + getPackaging <- none)
+END SUBMODULE

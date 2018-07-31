@@ -1,0 +1,76 @@
+/*********************************************************************
+ * CLASS TerminalUtility
+ * AUTHOR Jhi Morris
+ * DATE CREATED 06/05/18
+ * DATE LAST EDITED 29/05/18
+ * PURPOSE Handles user input from terminal and terminal output utilities.
+ *         This class is generic and was built to be reused easily
+ *         in future programs.
+ *********************************************************************/
+
+SUBMODULE: menuSelect
+IMPORTS: desc (String), error (String), max (Integer)
+EXPORTS: choice (Integer)
+ALGORITHM:
+  IF error IS NULL
+    error := ""
+  END IF
+
+  DO
+    OUTPUT error
+
+    IF NOT valid
+      OUTPUT "Invalid input. Please enter 0 - " max
+    END IF
+
+    INPUT choice
+
+    IF choice <= max AND choice >= 0
+      valid := TRUE
+    ELSE
+      valid := FALSE
+    END ELSE
+  WHILE NOT valid
+END SUBMODULE
+
+SUBMODULE: inputString
+IMPORTS: output (String)
+EXPORTS: input (String)
+ALGORITHM:
+  OUTPUT output
+  INPUT input //if only all code was this simple
+END SUBMODULE
+
+SUBMODULE: inRange
+IMPORTS: value (Integer), bound1 (Integer), bound2 (Integer)
+EXPORTS: out (Boolean)
+ALGORITHM:
+  out := FALSE
+
+  IF bound >= bound 2
+    IF value >= bound 2 AND value <= bound1
+      out := TRUE
+    END IF
+  ELSE
+    IF value >= bound1 AND value <= bound2
+      out := TRUE
+    END IF
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: inRange //same as above but real numbers
+IMPORTS: value (Real), bound1 (Real), bound2 (Real)
+EXPORTS: out (Boolean)
+ALGORITHM:
+  out := FALSE
+
+  IF bound >= bound 2
+    IF value >= bound 2 AND value <= bound1
+      out := TRUE
+    END IF
+  ELSE 
+    IF value >= bound1 AND value <= bound2
+      out := TRUE
+    END IF
+  END ELSE
+END SUBMODULE

@@ -1,0 +1,135 @@
+/*********************************************************************
+ * CLASS Grain
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 25/05/18
+ * PURPOSE Creates Grain object, with validation.
+ *********************************************************************/
+EXTENDS Food
+
+CLASSFIELDS:
+  type (String)
+  volume (Real)
+  bestBefore (Date)
+
+CONSTRUCTORS:
+
+  default:
+  IMPORTS: none
+    CONSTRUCT Food USING default
+    setType <- ""
+    setVolume <- 0.2
+    setBestBefore <- 31/12/9999
+
+  alternate:
+  IMPORTS: name (String), type (String), volume (Real), storageTemp (Real),
+           bestBefore (Date object), packaging (String)
+    CONSTRUCT Food USING alternate <- name, storageTemp, packaging
+    setType <- type
+    setVolume <- volume
+    setBestBefore <- bestBefore
+
+  copy:
+  IMPORTS: grainIn (Grain object)
+    CONSTRUCT Food using copy <- grainIn
+    setType <- grainIn getType <- none
+    setVolume <- grainIn getVolume <- none
+    setBestBefore <- grainIn getBestBefore <- none
+END CONSTRUCTORS
+
+SETTERS:
+
+  setType
+  IMPORTS: type (String)
+    IF type NOT NULL
+      CLASSFIELD type := type
+    ELSE
+      FAIL IllegalArgumentException "Error: Type is null."
+    END ELSE
+
+  setVolume
+  IMPORTS: volume (Real)
+    IF volume <= 0.2 && volume <= 5.0
+      CLASSFIELD volume := volume
+    ELSE
+      FAIL IllegalArgumentException "Error: Volume is out of range.""
+    END ELSE
+
+  setBestBefore
+  IMPORTS: bestBefore (Date object)
+    IF NOT isExpired <- bestBefore
+      CLASSFIELD bestBefore := bestBefore
+    ELSE
+      FAIL IllegalArgumentException "Error: Best-before date in past."
+    END ELSE
+END SETTERS
+
+GETTERS:
+
+  getType
+  EXPORTS: type
+
+  getVolume
+  EXPORTS: volume
+
+  getBestBefore
+  EXPORTS: bestBefore
+END GETTERS
+
+SUBMODULE: clone
+IMPORTS: none
+EXPORTS: clone (Grain)
+ALGORITHM:
+  clone := CONSTRUCT Grain USING alternate <- (getName <- none,
+    getType <- none, getVolume <- none, getStorageTemp <- none,
+    getBestBefore <- none, getPackaging <- none)
+END SUBMODULE
+
+SUBMODULE: toString
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string := (getVolume <- none + "L of " + getName <- none + ", " +
+    getType <- none + ". Packaged in " + getPackaging <- none +
+    ", with a best-before date of " + getBestBefore <- none) +
+    " and a storage temperature of " + getStorageTemp <- none + "°C.")
+END SUBMODULE
+
+SUBMODULE: equals
+IMPORTS: objIn (Object)
+EXPORTS: equals (Boolean)
+ALGORITHM:
+  equals := FALSE
+
+  IF (SUPER equals <- objIn) && objIn IS A Grain
+    grainIn := objIn TO Grain
+
+    IF (grainIn getType <- none EQUALS getType <- none) AND
+        grainIn getBestBefore <- none EQUALS getBestBefore <- none AND
+        grainIn getVolume <- none EQUALS getVolume <- none)
+      equals := TRUE
+    END IF
+  END IF
+END SUBMODULE
+
+SUBMODULE: calcExpiry
+IMPORTS: none
+EXPORTS: expired (Boolean)
+ALGORITHM:
+  today := DATE TODAY
+
+  IF getBestBefore <- none IS AFTER today
+    expired := false
+  ELSE
+    expired := true
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: toCSV
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string := ("Grain, " + getName <- none + ", " + getType <- none + ", " +
+    getVolume <- none + ", " + getStorageTemp <- none + ", " +
+    getBestBefore <- none + ", " + getPackaging <- none)
+END SUBMODULE

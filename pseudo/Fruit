@@ -1,0 +1,134 @@
+/*********************************************************************
+ * CLASS Fruit
+ * AUTHOR Jhi Morris
+ * DATE CREATED 02/05/18
+ * DATE LAST EDITED 25/05/18
+ * PURPOSE Creates Fruit object, with validation.
+ *********************************************************************/
+EXTENDS Food
+
+CLASSFIELDS:
+  type (String)
+  numPiece (Integer)
+  useby (Date object)
+
+CONSTRUCTORS:
+
+  default:
+  IMPORTS: none
+    CONSTRUCT Food USING default
+    setType <- ""
+    setNumPiece <- 1
+    setUseby <- 31/12/9999
+
+  alternate:
+  IMPORTS: name (String), type (String), numPiece (Integer),
+           storageTemp (Real), useby (Date object), packaging (String)
+    CONSTRUCT Food USING alternate <- name, storageTemp, packaging
+    setType <- type
+    setNumPiece <- numPiece
+    setUseby <- useby
+
+  copy:
+  IMPORTS: fruitIn (Fruit object)
+    CONSTRUCT Food using copy <- fruitIn
+    setType <- fruitIn getType <- none
+    setNumPiece <- fruitIn getNumPiece <- none
+    setUseby <- fruitIn getUseby <- none
+END CONSTRUCTORS
+
+SETTERS:
+
+  setType
+  IMPORTS: type (String)
+    IF type NOT NULL
+      CLASSFIELD type := type
+    ELSE
+      FAIL IllegalArgumentException "Error: Type is null."
+    END ELSE
+
+  setNumPiece
+  IMPORTS: numPiece (Integer)
+    IF TerminalUtility inRange <- numPiece, 1, 20 //range validation
+      CLASSFIELD numPiece := numPiece
+    ELSE
+      FAIL IllegalArgumentException "Error: Pieces out of range."
+    END ELSE
+
+  setUseby
+  IMPORTS: useby (Date)
+    IF NOT isExpired <- useby
+      CLASSFIELD useby := useby
+    ELSE
+      FAIL IllegalArgumentException "Error: Useby date in the past."
+    END ELSE
+END SETTERS
+
+GETTERS:
+
+  getType
+  EXPORTS: type (String)
+
+  getNumPiece
+  EXPORTS: numPiece (Integer)
+
+  getUseby
+  EXPORTS: useby (Date object)
+END GETTERS
+
+SUBMODULE: clone
+IMPORTS: none
+EXPORTS: cloen (Fruit object)
+ALGORITHM:
+  clone := CONSTRUCT Fruit USING alternate <- (getName <- none,
+    getType <- none, getNumPiece <- none, getStorageTemp <- none,
+    getUseby <- none, getPackaging <- none)
+END SUBMODULE
+
+SUBMODULE: toString
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string := (getNumPiece <- none + " pieces of " + getName <- none + ", " +
+    getType <- none + ". Packaged in " + getPackaging <- none +
+    ", with use-by date of " + getUseby <- none +
+    " and a storage temperature of " + getStorageTemp <- none + "°C.")
+END SUBMODULE
+
+SUBMODULE: equals
+IMPORTS: objIn (Object)
+EXPORTS: equals (Boolean)
+ALGORITHM:
+  equals := FALSE
+
+  IF SUPER equals <- objIn AND objIn IS A Fruit
+    fruitIn := objIn TO FRUIT
+
+    IF fruitIn getType <- none EQUALS getType <- none AND
+       fruitIn. getUseby <- none EQUALS getUseby <- none AND
+       fruitIn getNumPiece <- none EQUALS getNumPiece <- none
+      equals := TRUE
+    END IF
+  END IF
+END SUBMODULE
+
+SUBMODULE: calcExpiry
+IMPORTS: none
+EXPORTS: expired (Boolean)
+ALGORITHM:
+  today := DATE TODAY
+  IF getUseby <- none IS AFTER today
+    expired := FALSE
+  ELSE
+    expired := TRUE
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: toCSV
+IMPORTS: none
+EXPORTS: string (String)
+ALGORITHM:
+  string =: "Fruit, " + getName <- none + ", " + getType <- none +
+    ", " + getNumPiece <- none + ", " + getStorageTemp <- none + ", " +
+    getUseby <- none + ", " + getPackaging <- none
+END SUBMODULE

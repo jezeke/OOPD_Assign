@@ -1,0 +1,22 @@
+Jhi Morris OOPD Assignment Readme
+Date Created: 01-05-2018
+Date Last Modified: 29-05-2018
+
+Purpose & Functionality:
+  Manages items of food, classifying them appropriately, and organising
+  their storage accordingly.
+Files in Project:
+  JAVA: FileIO.java, Food.java, FoodVend.java, Fruit.java,
+    Grain.java, IFood.java, MainMenu.java, Meat.java, StorageFacility.java,
+    TerminalUtility.java, Vegetable.java
+  PSEUDO: FileIO, Food, FoodVend Fruit, Grain, MainMenu, Meat,
+    StorageFacility, TerminalUtility, Vegetable
+  OTHER: designphil.odt, UML.pdf, README
+
+Notes:
+  FoodVend is the main class.
+
+  Works with comma leading, trailing, or lacking forms of CSV.
+
+  User interface makes use of ANSI escape codes and LF newline characters.
+    May not behave as expected on non-*nix machines.

@@ -1,0 +1,205 @@
+/*********************************************************************
+ * CLASS StorageFacility
+ * AUTHOR Jhi Morris
+ * DATE CREATED 05/05/18
+ * DATE LAST EDITED 29/05/18
+ * PURPOSE Holds array of Foods and allows addition and removal of Food
+ *         objects to it. Stores Foods differently based on temperature.
+ *********************************************************************/
+
+CLASSFIELDS:
+  storage (Array of array of Food objects)
+  FREEZER := 0 (CONSTANT integer) //magic numbers for sorting storage easily
+  FRIDGE := 1(CONSTANT integer)
+  PANTRY := 2 (CONSTANT integer)
+
+CONSTRUCTORS:
+
+  default:
+  IMPORTS none
+    CONSTRUCT StorageFacility USING alternate <- {0, 0, 0}
+
+  alternate:
+  IMPORTS: sizes (Array of integers)
+    setStorage <- FREEZER, sizes[FREEZER]
+    setStorage <- FRIDGE, sizes[FRIDGE]
+    setStorage <- PANTRY, sizes[PANTRY]
+
+  copy:
+  IMPORTS: storFac (StorageFacility object)
+    storage := storFac getStorage <- none
+
+    FOR int := 0 TO LENGTH OF storage INC i
+      setStorage <- i, LENGTH OF storage[i]
+
+      FOR j := 0 TO LENGTH OF storage[i] INC j
+        IF storage[i][j] NOT NULL
+          addFood <- storage[i][j] clone <- none
+        END IF
+      END FOR
+    END FOR
+END CONSTRUCTORS
+
+SUBMODULE: setStorage
+IMPORTS: location (Integer), length (Integer)
+EXPORTS: none
+ALGORITHM:
+  IF length < 0
+    FAIL IllegalArgumentException "Error: Cannot create store with" +
+      " negative length"
+  END IF
+
+  IF storage[location] NOT NULL
+    FAIL IllegalStateException "Error: Cannot make multiple" +
+      " instances of location"
+  END IF
+
+  storage[locatation] := ARRAY OF Food WITH LENGTH length
+END SUBMODULE
+
+SUBMODULE: getFridge
+IMPORTS: none
+EXPORTS: out (Array of Food objects)
+ALGORITHM:
+  fridge := storage[FRIDGE]
+  out := ARRAY OF Food WITH LENGTH LENGTH OF FRIDGE
+
+  FOR i := 0 TO LENGTH OF FRIDGE INC i
+    IF fridge[i] NOT NULL
+      out[i] := fridge[i] clone <- none
+    END IF
+  END FOR
+END SUBMODULE
+
+SUBMODULE: getPantry
+IMPORTS: none
+EXPORTS: out (Array of Food objects)
+ALGORITHM:
+  pantry := storage[PANTRY]
+  out := ARRAY OF Food WITH LENGTH LENGTH OF PANTRY
+
+  FOR i := 0 TO LENGTH OF PANTRY INC i
+    IF pantry[i] NOT NULL
+      out[i] := pantry[i] clone <- none
+    END IF
+  END FOR
+END SUBMODULE
+
+SUBMODULE: getFreezer
+IMPORTS: none
+EXPORTS: out (Array of Food objects)
+ALGORITHM:
+  freezer := storage[FREEZER]
+  out := ARRAY OF Food WITH LENGTH LENGTH OF freezer
+
+  FOR i := 0 TO LENGTH OF FREEZER INC i
+    IF freezer[i] NOT NULL
+      out[i] := freezer[i] clone <- none
+    END IF
+  END FOR
+END SUBMODULE
+
+SUBMODULE: getStorage
+IMPORTS: none
+EXPORT: out (Array of array of Food objects)
+ALGORITHM:
+  out := ARRAY OF ARRAY OF FOOD WITH LENGTH LENGTH OF storage
+
+  FOR i := 0 TO LENGTH OF storage INC i
+    out[i] := ARRAY OF FOOD WITH LENGTH LENGTH OF storage[i]
+
+    FOR j := 0 TO LENGTH OF storage[i] INC j
+      IF storage[i][j] NOT NULL
+        out[i][j] := storage[i][j] clone <- none
+      END IF
+    END FOR
+  END FOR
+END SUBMODULE
+
+SUBMODULE: addFood
+IMPORTS: food (Food object)
+EXPORTS: none
+ALGORITHM:
+  IF food IS NULL
+    FAIL IllegalStateException "Error: Null food object."
+  END IF
+
+  CASE checkTemp <- (food getStorageTemp <- none)
+    FREEZER:
+      TRY
+        storage[FREEZER][nextNullAt <- (getFreezer <- none)] := food clone
+      CATCH ArrayIndexOutOfBoundsException
+        FAIL IllegalStateException "Error: No space in freezer."
+      END TRYCATCH
+    FRIDGE:
+      TRY
+        storage[fridge][nextNullAt <- (getFridge <- none)] := food clone
+      CATCH ArrayIndexOutOfBoundsException
+        FAIL IllegalStateException "Error: No space in fridge."
+      END TRYCATCH
+    PANTRY:
+      TRY
+        storage[PANTRY][nextNullAt <- (getPantry <- none)] := food clone
+      CATCH ArrayIndexOutOfBoundsException
+        FAIL IllegalStateException "Error: No space in pantry."
+      END TRYCATCH
+  END CASE
+END SUBMODULE
+
+SUBMODULE: nextNullAt
+IMPORTS: array (Array of objecs)
+EXPORTS: i (Integer)
+ALGORITHM:
+  i := 0
+
+  WHILE array[i] NOT NULL
+    INC i
+  END WHILE
+END SUBMODULE
+
+SUBMODULE: checkTemp
+IMPORTS: storageTemp (Real)
+EXPORTS: sort (Integer)
+ALGORITHM:
+  IF TerminalUtility inRange <- storageTemp, -27.0, 25
+    IF storageTemp < -5
+      sort := FREEZER
+    ELSE
+      IF storageTemp > 25
+        sort := PANTRY
+      ELSE
+        sort := FRIDGE
+      END ELSE
+    END ELSE
+  ELSE
+    FAIL IllegalArgumentException "Error: Temperature out of range."
+  END ELSE
+END SUBMODULE
+
+SUBMODULE: removeFood
+IMPORTS: location (Integer), element (Integer)
+EXPORTS: none
+ALGORITHM:
+  elementAt := 0
+  index := 0
+  found := false
+
+  IF location > 2 OR location < 0
+    FAIL IllegalArgumentException "Error: Invalid location."
+  END IF
+
+  TRY
+    DO
+      IF storage[location][index] NOT NULL
+        INC elementAt
+        IF elementAt EQUALS element
+          storage[location][index] := NULL //remove food
+          found := TRUE
+        END IF
+      END IF
+      INC index
+    WHILE NOT found
+  CATCH ArrayIndexOutOfBoundsException
+    FAIL IllegalArgumentException "Error: Element not found."
+  END TRYCATCH
+END SUBMODULE
